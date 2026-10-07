@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birthday Countdown</title>
+
+
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        overflow: hidden;
+    }
+
+    .container {
+        width: min(100%, 650px);
+        padding: 35px;
+        text-align: center;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 22px;
+        backdrop-filter: blur(12px);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    }
+
+    h1 {
+        font-size: 36px;
+        margin-bottom: 10px;
+    }
+
+    .subtitle {
+        margin-bottom: 25px;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .date-section {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+    }
+
+    input {
+        flex: 1;
+        min-width: 0;
+        padding: 14px;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        outline: none;
+    }
+
+    button {
+        padding: 14px 20px;
+        border: none;
+        border-radius: 10px;
+        background: #111827;
+        color: white;
+        font-size: 15px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    button:hover {
+        opacity: 0.9;
+    }
+
+    .countdown {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+    }
+
+    .unit {
+        padding: 20px 10px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.14);
+    }
+
+    .number {
+        display: block;
+        font-size: 38px;
+        font-weight: bold;
+    }
+
+    .label {
+        display: block;
+        margin-top: 5px;
+        font-size: 13px;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .message {
+        min-height: 30px;
+        margin-top: 25px;
+        font-size: 20px;
+        font-weight: bold;
+    }
+
+    .celebrating {
+        animation: pulse 0.8s infinite alternate;
+    }
+
+    @keyframes pulse {
+        from {
+            transform: scale(1);
+        }
+
+        to {
+            transform: scale(1.04);
+        }
+    }
+
+    .confetti {
+        position: fixed;
+        top: -20px;
+        width: 10px;
+        height: 16px;
+        pointer-events: none;
+        animation: fall linear forwards;
+    }
+
+    @keyframes fall {
+        0% {
+            transform: translateY(0) rotate(0deg);
+            opacity: 1;
+        }
+
+        100% {
+            transform: translateY(110vh) rotate(720deg);
+            opacity: 0;
+        }
+    }
+
+    @media (max-width: 550px) {
+        .container {
+            padding: 25px 18px;
+        }
+
+        h1 {
+            font-size: 29px;
+        }
+
+        .date-section {
+            flex-direction: column;
+        }
+
+        .countdown {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .number {
+            font-size: 32px;
+        }
+    }
+</style>
+
+
+</head>
+
+<body>
+    <main class="container" id="container">
+        <h1>🎂 Birthday Countdown</h1>
+        <p class="subtitle">Choose a birthday and let the countdown begin!</p>
+
+
+    <div class="date-section">
+        <input type="datetime-local" id="birthdayInput">
+        <button id="startButton">Start Countdown</button>
+    </div>
+
+    <section class="countdown">
+        <div class="unit">
+            <span class="number" id="days">00</span>
+            <span class="label">Days</span>
+        </div>
+
+        <div class="unit">
+            <span class="number" id="hours">00</span>
+            <span class="label">Hours</span>
+        </div>
+
+        <div class="unit">
+            <span class="number" id="minutes">00</span>
+            <span class="label">Minutes</span>
+        </div>
+
+        <div class="unit">
+            <span class="number" id="seconds">00</span>
+            <span class="label">Seconds</span>
+        </div>
+    </section>
+
+    <p class="message" id="message"></p>
+</main>
+
+<script>
+    const birthdayInput = document.getElementById("birthdayInput");
+    const startButton = document.getElementById("startButton");
+    const container = document.getElementById("container");
+    const message = document.getElementById("message");
+
+    const daysElement = document.getElementById("days");
+    const hoursElement = document.getElementById("hours");
+    const minutesElement = document.getElementById("minutes");
+    const secondsElement = document.getElementById("seconds");
+
+    let countdownInterval;
+
+    function updateCountdown() {
+        const target = new Date(birthdayInput.value).getTime();
+        const now = Date.now();
+        const difference = target - now;
+
+        if (difference <= 0) {
+            clearInterval(countdownInterval);
+
+            daysElement.textContent = "00";
+            hoursElement.textContent = "00";
+            minutesElement.textContent = "00";
+            secondsElement.textContent = "00";
+
+            message.textContent = "🎉 HAPPY BIRTHDAY! 🎂";
+            container.classList.add("celebrating");
+
+            createConfetti();
+            return;
+        }
+
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor(
+            (difference / (1000 * 60 * 60)) % 24
+        );
+        const minutes = Math.floor(
+            (difference / (1000 * 60)) % 60
+        );
+        const seconds = Math.floor(
+            (difference / 1000) % 60
+        );
+
+        daysElement.textContent = String(days).padStart(2, "0");
+        hoursElement.textContent = String(hours).padStart(2, "0");
+        minutesElement.textContent = String(minutes).padStart(2, "0");
+        secondsElement.textContent = String(seconds).padStart(2, "0");
+
+        message.textContent = "The big moment is getting closer!";
+    }
+
+    function createConfetti() {
+        for (let i = 0; i < 180; i++) {
+            const piece = document.createElement("div");
+
+            piece.className = "confetti";
+
+            piece.style.left = Math.random() * 100 + "vw";
+            piece.style.backgroundColor = getRandomColor();
+            piece.style.animationDuration =
+                2 + Math.random() * 4 + "s";
+            piece.style.animationDelay =
+                Math.random() * 2 + "s";
+            piece.style.transform =
+                `rotate(${Math.random() * 360}deg)`;
+
+            document.body.appendChild(piece);
+
+            setTimeout(() => {
+                piece.remove();
+            }, 7000);
+        }
+    }
+
+    function getRandomColor() {
+        const colors = [
+            "#ff4757",
+            "#ffa502",
+            "#2ed573",
+            "#1e90ff",
+            "#e056fd",
+            "#ffdd59"
+        ];
+
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    startButton.addEventListener("click", () => {
+        if (!birthdayInput.value) {
+            message.textContent = "Please choose a date and time first.";
+            return;
+        }
+
+        const target = new Date(birthdayInput.value).getTime();
+
+        if (target <= Date.now()) {
+            message.textContent = "Please choose a future date.";
+            return;
+        }
+
+        clearInterval(countdownInterval);
+        container.classList.remove("celebrating");
+        message.textContent = "";
+
+        updateCountdown();
+        countdownInterval = setInterval(updateCountdown, 1000);
+    });
+</script>
+
+
+</body>
+</html>
